@@ -1,0 +1,5 @@
+---
+tls:
+  certificates:
+    - certFile: /etc/traefik/certificates/cert/apimon.services.regio.digital.pem
+      keyFile: /etc/traefik/certificates/key/apimon.services.regio.digital.pem

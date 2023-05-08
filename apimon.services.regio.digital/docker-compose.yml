@@ -1,0 +1,51 @@
+---
+services:
+  traefik:
+    image: traefik:v2.10.1
+    restart: always
+    command:
+      - "--api.insecure=true"
+      - "--providers.file=true"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+    ports:
+      - 0.0.0.0:443:443
+    volumes:
+      - "./files/certificates:/etc/traefik/certificates:ro"
+      - "./files/certificates.yml:/etc/traefik/dynamic/certificates.yml:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  grafana:
+    image: grafana/grafana:9.5.1
+    restart: always
+    volumes:
+      - grafana:/var/lib/grafana
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "traefik.http.routers.grafana-secure.rule=Host(`apimon.services.regio.digital`)"
+      - "traefik.http.routers.grafana-secure.entrypoints=https"
+      - "traefik.http.routers.grafana-secure.tls=true"
+    environment:
+      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+
+  telegraf:
+    image: telegraf:1.21
+    restart: always
+    ports:
+      - 127.0.0.1:8186:8186
+    volumes:
+      - "./files/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
+
+  influxdb:
+    image: influxdb:1.8
+    restart: always
+    volumes:
+      - influxdb:/var/lib/influxdb
+
+volumes:
+  grafana:
+  influxdb:
